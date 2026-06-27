@@ -1,0 +1,356 @@
+"use client";
+
+import * as React from "react";
+
+const YOUTUBE_PLAYLIST_ID = "PLbtikly6et8WoDb0PjDzg13LHCLuw7JdM";
+const FALLBACK_AUDIO_SRC = "/music/theme.mp3";
+const STORAGE_KEY = "portfolio-music:last-video-id";
+
+type YouTubePlayerState = {
+  playVideo: () => void;
+  pauseVideo: () => void;
+  getPlayerState?: () => number;
+  setLoop: (loop: boolean) => void;
+  setShuffle: (shuffle: boolean) => void;
+  playVideoAt: (index: number) => void;
+  cuePlaylist: (options: {
+    listType?: "playlist" | "user_uploads";
+    list: string;
+    index?: number;
+    startSeconds?: number;
+  }) => void;
+  getPlaylist: () => string[];
+  getVideoData: () => { video_id?: string };
+  destroy: () => void;
+};
+
+type YouTubePlayerConstructor = new (
+  element: HTMLElement,
+  options: Record<string, unknown>,
+) => YouTubePlayerState;
+
+declare global {
+  interface Window {
+    YT?: {
+      Player: YouTubePlayerConstructor;
+      PlayerState: {
+        ENDED: number;
+        PLAYING: number;
+        PAUSED: number;
+        BUFFERING: number;
+        CUED: number;
+      };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+function readStoredVideoId() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveVideoId(videoId: string | undefined) {
+  if (typeof window === "undefined" || !videoId) return;
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, videoId);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function loadYouTubeIframeApi() {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("YouTube API requires a browser"));
+  }
+
+  if (window.YT?.Player) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[data-youtube-iframe-api="true"]',
+    );
+
+    const settleOnReady = () => {
+      if (window.YT?.Player) {
+        resolve();
+        return true;
+      }
+
+      return false;
+    };
+
+    if (settleOnReady()) return;
+
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previousReady?.();
+      resolve();
+    };
+
+    if (existingScript) {
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("YouTube API script failed to load")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    script.dataset.youtubeIframeApi = "true";
+    script.onerror = () => reject(new Error("YouTube API script failed to load"));
+    document.head.appendChild(script);
+  });
+}
+
+export function useMusicPlayer() {
+  const [playing, setPlaying] = React.useState(false);
+  const [playerReady, setPlayerReady] = React.useState(false);
+  const [fallbackActive, setFallbackActive] = React.useState(false);
+  const playerHostRef = React.useRef<HTMLDivElement>(null);
+  const fallbackAudioRef = React.useRef<HTMLAudioElement>(null);
+  const playerRef = React.useRef<YouTubePlayerState | null>(null);
+  const shouldPlayRef = React.useRef(false);
+  const hasStartedRef = React.useRef(false);
+  const destroyedRef = React.useRef(false);
+
+  const pauseFallback = React.useCallback(() => {
+    const audio = fallbackAudioRef.current;
+
+    if (!audio) return;
+
+    audio.pause();
+  }, []);
+
+  const playFallback = React.useCallback(async () => {
+    const audio = fallbackAudioRef.current;
+
+    if (!audio) {
+      return false;
+    }
+
+    try {
+      await audio.play();
+      setFallbackActive(true);
+      setPlaying(true);
+      return true;
+    } catch {
+      setFallbackActive(true);
+      setPlaying(false);
+      return false;
+    }
+  }, []);
+
+  const startFromStoredTrack = React.useCallback(() => {
+    const player = playerRef.current;
+
+    if (!player) return false;
+
+    const storedVideoId = readStoredVideoId();
+    const playlist = player.getPlaylist?.() ?? [];
+
+    if (storedVideoId) {
+      const storedIndex = playlist.indexOf(storedVideoId);
+
+      if (storedIndex >= 0) {
+        player.playVideoAt(storedIndex);
+        hasStartedRef.current = true;
+        return true;
+      }
+    }
+
+    player.playVideo();
+    hasStartedRef.current = true;
+    return true;
+  }, []);
+
+  const resumeCurrentTrack = React.useCallback(() => {
+    const player = playerRef.current;
+
+    if (!player) return false;
+
+    player.playVideo();
+    hasStartedRef.current = true;
+    return true;
+  }, []);
+
+  const activateFallback = React.useCallback(async () => {
+    setFallbackActive(true);
+    const player = playerRef.current;
+
+    try {
+      player?.pauseVideo?.();
+    } catch {
+      // Ignore player pause failures.
+    }
+
+    return playFallback();
+  }, [playFallback]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function initPlayer() {
+      try {
+        await loadYouTubeIframeApi();
+
+        if (cancelled || destroyedRef.current || !playerHostRef.current || !window.YT?.Player) {
+          return;
+        }
+
+        playerRef.current = new window.YT.Player(playerHostRef.current, {
+          width: "1",
+          height: "1",
+          videoId: "",
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            iv_load_policy: 3,
+            list: YOUTUBE_PLAYLIST_ID,
+            listType: "playlist",
+            loop: 1,
+            modestbranding: 1,
+            playsinline: 1,
+            rel: 0,
+          },
+          events: {
+            onReady: (event: { target: YouTubePlayerState }) => {
+              if (cancelled || destroyedRef.current) return;
+
+              playerRef.current = event.target;
+
+              try {
+                event.target.setLoop(true);
+                event.target.setShuffle(true);
+                event.target.cuePlaylist({
+                  listType: "playlist",
+                  list: YOUTUBE_PLAYLIST_ID,
+                  index: 0,
+                });
+              } catch {
+                // If setup fails, we fall back below.
+              }
+
+              setPlayerReady(true);
+
+              if (shouldPlayRef.current) {
+                startFromStoredTrack();
+                setPlaying(true);
+              }
+            },
+            onStateChange: (event: { data: number; target: YouTubePlayerState }) => {
+              if (cancelled || destroyedRef.current) return;
+
+              const player = event.target;
+              playerRef.current = player;
+
+              if (event.data === window.YT?.PlayerState.PLAYING) {
+                setPlaying(true);
+                setFallbackActive(false);
+                hasStartedRef.current = true;
+                saveVideoId(player.getVideoData?.().video_id);
+                return;
+              }
+
+              if (event.data === window.YT?.PlayerState.PAUSED) {
+                setPlaying(false);
+                saveVideoId(player.getVideoData?.().video_id);
+                return;
+              }
+
+              if (event.data === window.YT?.PlayerState.ENDED) {
+                saveVideoId(player.getVideoData?.().video_id);
+              }
+            },
+            onError: () => {
+              void activateFallback();
+            },
+          },
+        });
+      } catch {
+        if (!cancelled && !destroyedRef.current) {
+          void activateFallback();
+        }
+      }
+    }
+
+    void initPlayer();
+
+    return () => {
+      cancelled = true;
+      destroyedRef.current = true;
+
+      try {
+        playerRef.current?.destroy();
+      } catch {
+        // Ignore teardown failures.
+      }
+    };
+  }, [activateFallback, startFromStoredTrack]);
+
+  const toggleMusic = React.useCallback(() => {
+    const player = playerRef.current;
+
+    if (playing) {
+      shouldPlayRef.current = false;
+      setPlaying(false);
+      pauseFallback();
+
+      try {
+        player?.pauseVideo?.();
+      } catch {
+        // Ignore player pause failures.
+      }
+
+      return;
+    }
+
+    shouldPlayRef.current = true;
+
+    if (playerReady && player) {
+      const started = hasStartedRef.current
+        ? resumeCurrentTrack()
+        : startFromStoredTrack();
+
+      if (started) {
+        setFallbackActive(false);
+        setPlaying(true);
+        pauseFallback();
+        return;
+      }
+    }
+
+    void playFallback();
+  }, [
+    pauseFallback,
+    playFallback,
+    playerReady,
+    playing,
+    resumeCurrentTrack,
+    startFromStoredTrack,
+  ]);
+
+  return {
+    fallbackActive,
+    fallbackAudioRef,
+    playing,
+    playerHostRef,
+    playerReady,
+    toggleMusic,
+  };
+}
+
+export const MUSIC_FALLBACK_AUDIO_SRC = FALLBACK_AUDIO_SRC;

@@ -1,4 +1,3 @@
-import { Icons } from '@/components/icons';
 import { projects } from '@/constants/projects';
 import {
   PageHeader,
@@ -6,38 +5,37 @@ import {
   PageHeaderHeading,
 } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
+import { Icons } from '@/components/icons';
+import type { ComponentType } from 'react';
 
 import { siteConfig } from '@/config/site';
 import { ArrowLeftIcon, ExternalLinkIcon } from 'lucide-react';
 import Link from 'next/link';
 
-const techIconMap: Record<string, keyof typeof Icons> = {
-  'react.js': 'react',
-  react: 'react',
-  'tailwind css': 'tailwind',
-  vite: 'vite',
-  'framer motion': 'FramerMotionIcon',
-  vercel: 'vercel',
-  'next.js': 'nextjs',
-  nextjs: 'nextjs',
-  'sadcn/ui': 'shadcnui',
-  'shadcn/ui': 'shadcnui',
-  'shadcn-ui': 'shadcnui',
-  mongodb: 'mongodb',
-  'radix ui': 'radixui',
-  typescript: 'typescript',
-  redux: 'ReduxIcon',
-  html: 'html',
-  css: 'css',
-  javascript: 'javascript',
-  'github api': 'gitHub',
+const TECH_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  'Next.js': Icons.nextjs,
+  React: Icons.react,
+  'React.js': Icons.react,
+  'Tailwind CSS': Icons.tailwind,
+  TypeScript: Icons.typescript,
+  JavaScript: Icons.javascript,
+  HTML: Icons.html,
+  CSS: Icons.css,
+  MongoDB: Icons.mongodb,
+  Redux: Icons.ReduxIcon,
+  'shadcn-ui': Icons.shadcn,
+  'SadCn/UI': Icons.shadcn,
+  'Radix UI': Icons.MaterialUIIcon,
+  Vite: Icons.vercel,
+  Vercel: Icons.vercel,
+  Node: Icons.nodejs,
+  'Node.js': Icons.nodejs,
+  Express: Icons.express,
+  Docker: Icons.docker,
+  FastAPI: Icons.spinner,
+  'GitHub API': Icons.gitHub,
+  'GitHub': Icons.gitHub,
 };
-
-function getTechIcon(tech: string) {
-  const normalized = tech.toLowerCase().trim();
-
-  return techIconMap[normalized];
-}
 
 const getProject = async (slug: string) => {
   return projects.find((project) => project.slug === slug);
@@ -89,25 +87,19 @@ const ProjectDetails = async ({
       <div id="badges" className="my-4">
         <h2 className="text-lg font-semibold">Tech Stack</h2>
         <div className="flex flex-wrap items-center gap-2">
-          {project.techStack?.map((tech) => (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-2 rounded-full border-border/50 bg-background/60 px-3.5 py-1.5 text-sm font-medium shadow-sm backdrop-blur-sm transition-colors hover:bg-background/80"
-              key={tech}
-            >
-              {getTechIcon(tech) ? (
-                <>
-                  {Icons[getTechIcon(tech)!]?.({
-                    className: 'size-4 shrink-0 text-current',
-                    'aria-hidden': 'true',
-                  })}
-                  <span>{tech}</span>
-                </>
-              ) : (
-                <span>{tech}</span>
-              )}
-            </Badge>
-          ))}
+          {project.techStack?.map((tech) => {
+            const TechIcon = TECH_ICONS[tech];
+            return (
+              <Badge
+                variant="outline"
+                className="flex items-center gap-1.5 px-4 text-base shadow-md"
+                key={tech}
+              >
+                {TechIcon ? <TechIcon className="h-3.5 w-3.5" /> : null}
+                {tech}
+              </Badge>
+            );
+          })}
         </div>
       </div>
 

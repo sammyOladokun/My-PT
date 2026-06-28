@@ -11,36 +11,6 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 const ProjectsPage = () => {
-  type CardAccentStyle = CSSProperties & Record<`--${string}`, string>;
-
-  const accentBars = [
-    {
-      color: "#22d3ee",
-      border: "rgba(34, 211, 238, 0.32)",
-      glow: "rgba(34, 211, 238, 0.45)",
-    },
-    {
-      color: "#f59e0b",
-      border: "rgba(245, 158, 11, 0.32)",
-      glow: "rgba(245, 158, 11, 0.45)",
-    },
-    {
-      color: "#a78bfa",
-      border: "rgba(167, 139, 250, 0.32)",
-      glow: "rgba(167, 139, 250, 0.45)",
-    },
-    {
-      color: "#34d399",
-      border: "rgba(52, 211, 153, 0.32)",
-      glow: "rgba(52, 211, 153, 0.45)",
-    },
-    {
-      color: "#e879f9",
-      border: "rgba(232, 121, 249, 0.32)",
-      glow: "rgba(232, 121, 249, 0.45)",
-    },
-  ];
-
   return (
     <>
       <PageHeader className="mb-10">
@@ -55,35 +25,24 @@ const ProjectsPage = () => {
           <Card
             title={project.overview}
             key={index}
-            className="group relative w-full overflow-hidden !border-white/10 !bg-transparent !shadow-none ring-1 ring-inset ring-white/10 backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.05] hover:shadow-none focus-within:border-[var(--card-accent-border)] focus-within:ring-[var(--card-accent-border)] focus-within:bg-white/[0.06] focus-within:shadow-[0_0_0_1px_var(--card-accent-border),0_0_18px_var(--card-accent-glow),0_12px_30px_rgba(0,0,0,0.08)] dark:!border-white/10 dark:!bg-transparent"
-          style={{
-            "--card-accent-color": accentBars[index % accentBars.length].color,
-            "--card-accent-border": accentBars[index % accentBars.length].border,
-            "--card-accent-glow": accentBars[index % accentBars.length].glow,
-          } as CardAccentStyle}
-        >
-            <CardHeader className="relative pt-8">
-              <span
-                aria-hidden="true"
-                className="absolute left-6 top-4 h-0.5 w-10 rounded-full"
-                style={{
-                  backgroundColor: accentBars[index % accentBars.length].color,
-                  boxShadow: `0 0 14px ${accentBars[index % accentBars.length].glow}`,
-                }}
-              />
-              <CardTitle className="leading-6 text-foreground">
-                {project.title}
-              </CardTitle>
-              <CardDescription className="flex flex-col gap-2 text-muted-foreground/90">
-                <span className="leading-6">{project.tagline}</span>
+            style={
+              {
+                '--card-accent': project.accent,
+              } as CSSProperties
+            }
+            className="project-card relative w-full cursor-pointer isolate overflow-hidden border-border/10 bg-card/5 shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-300 backdrop-blur-3xl supports-[backdrop-filter]:bg-card/[0.04] md:border-transparent md:bg-card/10 md:shadow-[0_14px_38px_rgba(0,0,0,0.06)] md:backdrop-blur-[32px] md:hover:scale-[1.03]"
+          >
+            <div className="project-card__accent absolute left-6 top-0 h-1 w-16 rounded-b-full md:top-6 md:h-0.5 md:w-20" />
+            <CardHeader className="md:pt-12">
+              <CardTitle className="leading-6">{project.title}</CardTitle>
+              <CardDescription className="flex flex-col gap-2">
+                {project.tagline}
                 <Link
                   href={`/projects/${project.slug}`}
-                  className="relative z-10 inline-flex w-fit items-center text-sm font-medium transition-colors hover:opacity-100 focus-visible:outline-none"
-                  style={{
-                    color: accentBars[index % accentBars.length].color,
-                  }}
+                  className="project-card__cta font-medium transition-colors hover:opacity-80"
                 >
                   Learn More...
+                  <span className="absolute inset-0"></span>
                 </Link>
               </CardDescription>
             </CardHeader>

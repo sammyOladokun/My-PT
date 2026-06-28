@@ -2,6 +2,7 @@ export const projects = [
   {
     title: "Nike Reimagined | Modern Redesign Concept",
     slug: "nike-reimagined",
+    accent: "#22d3ee",
     tagline:
       "A sleek and modern redesign of Nike’s official web experience built with React and Tailwind CSS.",
     overview:
@@ -42,6 +43,7 @@ export const projects = [
   {
     title: "Portfolio | Samuel Oladokun",
     slug: "portfolio",
+    accent: "#a855f7",
     tagline:
       "A dynamic portfolio showcasing my projects, skills, and contributions using the latest web technologies.",
     overview:
@@ -77,12 +79,13 @@ export const projects = [
     feedback: true,
     links: {
       live: "https://sammyoladokun.github.io",
-      github: "https://topmate.io/samueloladokun/1773422",
+      github: "https://topmate.io/samueloladokun90/1773422",
     },
   },
   {
     title: "News Hub | Real-Time News Platform",
     slug: "news-hub",
+    accent: "#f97316",
     tagline:
       "A real-time news platform delivering the latest headlines across various categories using the News API.",
     overview:
@@ -122,6 +125,7 @@ export const projects = [
   {
     title: "Freshmart Store | Modern Grocery Web App",
     slug: "freshmart-store",
+    accent: "#34d399",
     tagline:
       "A clean, modern, and responsive grocery store web app built with React, Vite, Redux, and Tailwind CSS.",
     overview:
@@ -160,6 +164,7 @@ export const projects = [
   {
     title: "GitHub Profile Viewer | Instant GitHub Insights",
     slug: "github-profile-viewer",
+    accent: "#ec4899",
     tagline:
       "An interactive web app to instantly view GitHub profiles with clean UI built using HTML, CSS, and JavaScript.",
     overview:

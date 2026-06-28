@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  allowedDevOrigins: [
-    "127.0.0.1",
-    "10.211.154.17",
-  ],
   async headers() {
     return [{ source: "/site.webmanifest", headers: manifestHeaders }];
   },

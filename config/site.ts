@@ -20,11 +20,13 @@ export const siteConfig = {
   ],
   links: {
     shadcn: 'https://ui.shadcn.com/',
+    // telegram: 'https://t.me/nexjsx',
+    // twitter: 'https://x.com/sammyoladokun',
     github: 'https://github.com/sammyOladokun',
     githubProfile: 'https://github.com/sammyOladokun',
     linkedin: 'https://www.linkedin.com/in/samueloladokun/',
     resume: 'https://drive.google.com/file/d/19qK7McDjOdxuvwRLW5OiwNAaf-dWNJ0e/view?usp=drivesdk',
-    email: 'samueloladokun90@gmail.com',
+    email: 'mailto:samueloladokun90@gmail.com',
     githubUsername: 'sammyOladokun',
   },
 };

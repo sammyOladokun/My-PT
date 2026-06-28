@@ -5,6 +5,7 @@ import * as React from "react";
 const YOUTUBE_PLAYLIST_ID = "PLbtikly6et8WoDb0PjDzg13LHCLuw7JdM";
 const FALLBACK_AUDIO_SRC = "/music/theme.mp3";
 const STORAGE_KEY = "portfolio-music:last-video-id";
+const DEBUG_MUSIC = process.env.NODE_ENV !== "production";
 
 type YouTubePlayerState = {
   playVideo: () => void;
@@ -65,12 +66,24 @@ function saveVideoId(videoId: string | undefined) {
   }
 }
 
+function logMusicStep(step: string, details?: unknown) {
+  if (!DEBUG_MUSIC) return;
+
+  if (details === undefined) {
+    console.debug(`[music] ${step}`);
+    return;
+  }
+
+  console.debug(`[music] ${step}`, details);
+}
+
 function loadYouTubeIframeApi() {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("YouTube API requires a browser"));
   }
 
   if (window.YT?.Player) {
+    logMusicStep("YouTube iframe API already available");
     return Promise.resolve();
   }
 
@@ -93,6 +106,7 @@ function loadYouTubeIframeApi() {
     const previousReady = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
       previousReady?.();
+      logMusicStep("YouTube iframe API ready callback fired");
       resolve();
     };
 
@@ -109,7 +123,10 @@ function loadYouTubeIframeApi() {
     script.src = "https://www.youtube.com/iframe_api";
     script.async = true;
     script.dataset.youtubeIframeApi = "true";
-    script.onerror = () => reject(new Error("YouTube API script failed to load"));
+    script.onerror = () => {
+      logMusicStep("YouTube iframe API failed to load");
+      reject(new Error("YouTube API script failed to load"));
+    };
     document.head.appendChild(script);
   });
 }
@@ -124,6 +141,7 @@ export function useMusicPlayer() {
   const shouldPlayRef = React.useRef(false);
   const hasStartedRef = React.useRef(false);
   const destroyedRef = React.useRef(false);
+  const fallbackTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pauseFallback = React.useCallback(() => {
     const audio = fallbackAudioRef.current;
@@ -131,6 +149,13 @@ export function useMusicPlayer() {
     if (!audio) return;
 
     audio.pause();
+  }, []);
+
+  const clearFallbackTimer = React.useCallback(() => {
+    if (fallbackTimeoutRef.current) {
+      clearTimeout(fallbackTimeoutRef.current);
+      fallbackTimeoutRef.current = null;
+    }
   }, []);
 
   const playFallback = React.useCallback(async () => {
@@ -186,7 +211,9 @@ export function useMusicPlayer() {
   }, []);
 
   const activateFallback = React.useCallback(async () => {
+    clearFallbackTimer();
     setFallbackActive(true);
+    logMusicStep("Fallback activated");
     const player = playerRef.current;
 
     try {
@@ -196,7 +223,7 @@ export function useMusicPlayer() {
     }
 
     return playFallback();
-  }, [playFallback]);
+  }, [clearFallbackTimer, playFallback]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -209,7 +236,7 @@ export function useMusicPlayer() {
           return;
         }
 
-        playerRef.current = new window.YT.Player(playerHostRef.current, {
+      playerRef.current = new window.YT.Player(playerHostRef.current, {
           width: "1",
           height: "1",
           videoId: "",
@@ -219,6 +246,7 @@ export function useMusicPlayer() {
             disablekb: 1,
             fs: 0,
             iv_load_policy: 3,
+            origin: typeof window !== "undefined" ? window.location.origin : undefined,
             list: YOUTUBE_PLAYLIST_ID,
             listType: "playlist",
             loop: 1,
@@ -231,6 +259,8 @@ export function useMusicPlayer() {
               if (cancelled || destroyedRef.current) return;
 
               playerRef.current = event.target;
+              clearFallbackTimer();
+              logMusicStep("YouTube player ready");
 
               try {
                 event.target.setLoop(true);
@@ -240,13 +270,17 @@ export function useMusicPlayer() {
                   list: YOUTUBE_PLAYLIST_ID,
                   index: 0,
                 });
+                logMusicStep("Playlist cued", YOUTUBE_PLAYLIST_ID);
               } catch {
+                logMusicStep("Playlist cue failed, using fallback");
                 // If setup fails, we fall back below.
               }
 
               setPlayerReady(true);
 
               if (shouldPlayRef.current) {
+                pauseFallback();
+                logMusicStep("Autoplay requested, starting playlist");
                 startFromStoredTrack();
                 setPlaying(true);
               }
@@ -258,30 +292,37 @@ export function useMusicPlayer() {
               playerRef.current = player;
 
               if (event.data === window.YT?.PlayerState.PLAYING) {
+                clearFallbackTimer();
+                pauseFallback();
                 setPlaying(true);
                 setFallbackActive(false);
                 hasStartedRef.current = true;
                 saveVideoId(player.getVideoData?.().video_id);
+                logMusicStep("YouTube playback started", player.getVideoData?.().video_id);
                 return;
               }
 
               if (event.data === window.YT?.PlayerState.PAUSED) {
                 setPlaying(false);
                 saveVideoId(player.getVideoData?.().video_id);
+                logMusicStep("YouTube playback paused", player.getVideoData?.().video_id);
                 return;
               }
 
               if (event.data === window.YT?.PlayerState.ENDED) {
                 saveVideoId(player.getVideoData?.().video_id);
+                logMusicStep("YouTube playback ended", player.getVideoData?.().video_id);
               }
             },
             onError: () => {
+              logMusicStep("YouTube player error");
               void activateFallback();
             },
           },
         });
       } catch {
         if (!cancelled && !destroyedRef.current) {
+          logMusicStep("YouTube player init failed, activating fallback");
           void activateFallback();
         }
       }
@@ -292,6 +333,7 @@ export function useMusicPlayer() {
     return () => {
       cancelled = true;
       destroyedRef.current = true;
+      clearFallbackTimer();
 
       try {
         playerRef.current?.destroy();
@@ -299,7 +341,7 @@ export function useMusicPlayer() {
         // Ignore teardown failures.
       }
     };
-  }, [activateFallback, startFromStoredTrack]);
+  }, [activateFallback, clearFallbackTimer, pauseFallback, startFromStoredTrack]);
 
   const toggleMusic = React.useCallback(() => {
     const player = playerRef.current;
@@ -308,6 +350,7 @@ export function useMusicPlayer() {
       shouldPlayRef.current = false;
       setPlaying(false);
       pauseFallback();
+      logMusicStep("Music paused by user");
 
       try {
         player?.pauseVideo?.();
@@ -319,8 +362,13 @@ export function useMusicPlayer() {
     }
 
     shouldPlayRef.current = true;
+    logMusicStep("Music toggle on", {
+      playerReady,
+      hasStarted: hasStartedRef.current,
+    });
 
     if (playerReady && player) {
+      clearFallbackTimer();
       const started = hasStartedRef.current
         ? resumeCurrentTrack()
         : startFromStoredTrack();
@@ -329,12 +377,21 @@ export function useMusicPlayer() {
         setFallbackActive(false);
         setPlaying(true);
         pauseFallback();
+        logMusicStep("Resumed YouTube playback");
         return;
       }
     }
 
-    void playFallback();
+    clearFallbackTimer();
+    logMusicStep("Waiting briefly before fallback");
+    fallbackTimeoutRef.current = setTimeout(() => {
+      if (!shouldPlayRef.current || playerReady) return;
+
+      logMusicStep("YouTube not ready in time; starting fallback");
+      void playFallback();
+    }, 2500);
   }, [
+    clearFallbackTimer,
     pauseFallback,
     playFallback,
     playerReady,

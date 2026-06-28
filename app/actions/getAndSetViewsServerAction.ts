@@ -5,13 +5,7 @@ import View from '@/model/views.model';
 
 export async function getViewsServerAction() {
   try {
-    const connected = await connectToDatabase();
-    if (!connected) {
-      return {
-        success: false,
-        message: 0,
-      };
-    }
+    await connectToDatabase();
 
     const viewDoc = await View.findOne({});
 
@@ -29,13 +23,7 @@ export async function getViewsServerAction() {
 
 export async function setViewsServerAction() {
   try {
-    const connected = await connectToDatabase();
-    if (!connected) {
-      return {
-        success: false,
-        message: 'Database is not configured',
-      };
-    }
+    await connectToDatabase();
 
     await View.findOneAndUpdate(
       {},

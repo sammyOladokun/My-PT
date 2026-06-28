@@ -23,11 +23,9 @@ interface MobileNavProps {
 export function MobileNav({ toggleMusic, playing }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
   const [time, setTime] = React.useState(new Date());
-  const [mounted, setMounted] = React.useState(false);
   const { setMetaColor, metaColor } = useMetaColor();
 
   React.useEffect(() => {
-    setMounted(true);
     const timer = setInterval(() => {
       setTime(new Date());
     }, 1000);
@@ -42,13 +40,11 @@ export function MobileNav({ toggleMusic, playing }: MobileNavProps) {
     [setMetaColor, metaColor]
   );
 
-  const formattedTime = mounted
-    ? time.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      })
-    : '--:--';
+  const formattedTime = time.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -56,7 +52,7 @@ export function MobileNav({ toggleMusic, playing }: MobileNavProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 shrink-0 rounded-full transition-all hover:scale-105 hover:bg-muted md:hidden"
+          className="h-9 w-9 rounded-full transition-all hover:scale-105 hover:bg-muted md:hidden"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

@@ -5,13 +5,7 @@ import LoveCount from "@/model/loveCount.model";
 
 export async function getLoveCountServerAction() {
   try {
-    const connected = await connectToDatabase();
-    if (!connected) {
-      return {
-        success: false,
-        count: 0,
-      };
-    }
+    await connectToDatabase();
     const loveDoc = await LoveCount.findOne({});
     return {
       success: true,
@@ -27,13 +21,7 @@ export async function getLoveCountServerAction() {
 
 export async function setLoveCountServerAction() {
   try {
-    const connected = await connectToDatabase();
-    if (!connected) {
-      return {
-        success: false,
-        message: "Database is not configured",
-      };
-    }
+    await connectToDatabase();
     const loveCount = await LoveCount.findOneAndUpdate(
       {},
       { $inc: { count: 1 } },

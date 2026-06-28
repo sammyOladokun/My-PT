@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export async function SiteFooter() {
   return (
-    <footer className="py-2 border-t border-transparent bg-transparent backdrop-blur-0">
+    <footer className="py-2 border-t border-border/40 bg-background/45 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/35">
       <div className="container-wrapper">
         <div className="container flex flex-col items-center justify-center py-4 space-y-2">
           <div className="max-w-3xl text-xs leading-relaxed text-center sm:text-sm text-balance text-muted-foreground">
@@ -27,7 +27,7 @@ export async function SiteFooter() {
           </div>
           <div className="text-xs text-center sm:text-sm text-muted-foreground">
             Developed by{" "}
-            <Link
+              <Link
               href={siteConfig.links.githubProfile}
               target="_blank"
               rel="noreferrer"
@@ -37,7 +37,7 @@ export async function SiteFooter() {
             </Link>{" "}
             · Source code available on{" "}
             <Link
-              href="https://topmate.io/samueloladokun/1773422"
+              href="https://topmate.io/samueloladokun90/1773422"
               target="_blank"
               rel="noreferrer"
               className="font-medium transition-colors text-primary hover:text-primary/80"

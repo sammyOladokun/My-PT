@@ -2,154 +2,135 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   BriefcaseBusiness,
+  FolderKanban,
   GraduationCap,
-  Home,
+  House,
   Mail,
   Menu,
-  FolderKanban,
   Sparkles,
   Wrench,
-  UserRound,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 
 import { docsConfig } from "@/config/docs";
-import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
+
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Home: House,
+  Introduction: House,
+  About: BookOpen,
+  "About Me": BookOpen,
+  Projects: FolderKanban,
+  "Skills & Tools": Wrench,
+  Experience: BriefcaseBusiness,
+  Education: GraduationCap,
+  Contact: Mail,
+  Stats: BarChart3,
+  Testimonials: Sparkles,
+};
 
 export function CommandMenu() {
-  const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-
-  const internalLinks = docsConfig.sidebarNav.flatMap((group: any) => group.items);
-
-  const closeMenu = React.useCallback(() => setOpen(false), []);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const mainNav = docsConfig?.mainNav ?? [];
+  const sidebarNav = docsConfig?.sidebarNav ?? [];
+  const pathname = usePathname();
 
   React.useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        rootRef.current &&
+        event.target instanceof Node &&
+        !rootRef.current.contains(event.target)
+      ) {
         setOpen(false);
       }
-    }
+    };
 
-    function handleKeyDown(event: KeyboardEvent) {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
+  const items = React.useMemo(() => {
+    const combined = [
+      ...mainNav.map((item: any) => ({
+        title: item.title,
+        href: item.href,
+        Icon: ICONS[item.title] ?? House,
+      })),
+      ...sidebarNav.flatMap((group: any) =>
+        (group.items ?? []).map((item: any) => ({
+          title: item.title,
+          href: item.href,
+          Icon: ICONS[item.title] ?? House,
+        }))
+      ),
+    ];
+
+    const uniqueByHref = new Map<string, (typeof combined)[number]>();
+    combined.forEach((item) => {
+      if (item.href && !uniqueByHref.has(item.href)) {
+        uniqueByHref.set(item.href, item);
+      }
+    });
+
+    return Array.from(uniqueByHref.values());
+  }, [mainNav, sidebarNav]);
+
   return (
-    <div ref={menuRef} className="relative hidden md:block">
+    <div ref={rootRef} className="relative hidden md:block">
       <Button
-        id="desktop-menu-button"
-        variant="outline"
-        onClick={() => setOpen((currentOpen) => !currentOpen)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-controls={open ? "desktop-menu-panel" : undefined}
-        className={cn(
-          "h-9 rounded-full border-border/60 bg-background/70 px-4 text-sm font-medium shadow-none transition-all hover:bg-accent"
-        )}
+        variant="ghost"
+        className="h-9 rounded-full border border-border/35 bg-background/45 px-4 text-sm font-medium text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all hover:border-border/60 hover:bg-background/60"
+        onClick={() => setOpen((value) => !value)}
       >
-        <Menu className="size-4" />
+        <Menu className="mr-2 h-4 w-4" />
         Menu
       </Button>
 
-      {open ? (
-        <div
-          id="desktop-menu-panel"
-          role="menu"
-          aria-labelledby="desktop-menu-button"
-          className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl shadow-black/10 backdrop-blur-xl"
-        >
-          <div className="max-h-[70vh] overflow-y-auto p-2">
-            <div className="space-y-1">
-              {internalLinks.map((item: any) => (
-                <MenuLink
-                  key={item.href}
-                  href={item.href}
-                  active={pathname === item.href}
-                  onNavigate={closeMenu}
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-2xl border border-border/40 bg-background/80 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
+          <div className="mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            Navigation
+          </div>
+          <div className="space-y-1">
+            {items.map(({ title, href, Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
                 >
-                  <MenuIcon href={item.href} />
-                  <span className="flex-1">{item.title}</span>
-                </MenuLink>
-              ))}
-            </div>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="font-medium">{title}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
-      ) : null}
+      )}
     </div>
-  );
-}
-
-function MenuIcon({ href }: { href: string }) {
-  const iconClassName = "size-3.5 shrink-0";
-
-  switch (href) {
-    case "/":
-      return <Home className={iconClassName} />;
-    case "/about":
-      return <UserRound className={iconClassName} />;
-    case "/projects":
-      return <FolderKanban className={iconClassName} />;
-    case "/skills-tools":
-      return <Wrench className={iconClassName} />;
-    case "/experience":
-      return <BriefcaseBusiness className={iconClassName} />;
-    case "/education":
-      return <GraduationCap className={iconClassName} />;
-    case "/contact":
-      return <Mail className={iconClassName} />;
-    case "/stats":
-      return <BarChart3 className={iconClassName} />;
-    default:
-      return <Sparkles className={iconClassName} />;
-  }
-}
-
-function MenuLink({
-  href,
-  children,
-  active,
-  external,
-  onNavigate,
-}: {
-  href: string;
-  children: React.ReactNode;
-  active?: boolean;
-  external?: boolean;
-  onNavigate?: () => void;
-}) {
-  const sharedClassName = cn(
-    "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all hover:border-border hover:bg-accent/60",
-    active
-      ? "border-primary/30 bg-primary/10 text-foreground"
-      : "border-border/40 bg-background/40 text-muted-foreground"
-  );
-
-  return (
-    <Link
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      className={sharedClassName}
-      {...(onNavigate ? { onClick: onNavigate } : {})}
-    >
-      {children}
-    </Link>
   );
 }

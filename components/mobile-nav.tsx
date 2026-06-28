@@ -18,9 +18,10 @@ import { Icons } from "./icons";
 interface MobileNavProps {
   toggleMusic: () => void;
   playing: boolean;
+  loading: boolean;
 }
 
-export function MobileNav({ toggleMusic, playing }: MobileNavProps) {
+export function MobileNav({ toggleMusic, playing, loading }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
   const [time, setTime] = React.useState(new Date());
   const { setMetaColor, metaColor } = useMetaColor();
@@ -91,7 +92,15 @@ export function MobileNav({ toggleMusic, playing }: MobileNavProps) {
                 className="h-8 w-8 rounded-full"
                 onClick={toggleMusic}
               >
-                <FiMusic className={`h-4 w-4 ${playing ? "text-blue-500" : "text-muted-foreground"}`} />
+                <FiMusic
+                  className={`h-4 w-4 ${
+                    loading
+                      ? "text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.4)] motion-safe:animate-[music-loading-beep_1s_linear_infinite]"
+                      : playing
+                        ? "text-blue-500"
+                        : "text-muted-foreground"
+                  }`}
+                />
               </Button>
 
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" asChild>

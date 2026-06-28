@@ -428,6 +428,17 @@ p {
   }
 }
 
+@keyframes music-loading-beep {
+  0%,
+  48% {
+    opacity: 0.22;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
 @keyframes pager-bounce {
   0%,
   100% {

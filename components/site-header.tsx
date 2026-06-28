@@ -17,6 +17,7 @@ export function SiteHeader() {
   const [time, setTime] = useState(new Date());
   const {
     fallbackAudioRef,
+    loading,
     playerHostRef,
     playing,
     toggleMusic,
@@ -47,7 +48,7 @@ export function SiteHeader() {
           <MainNav />
 
           {/* Mobile Nav */}
-          <MobileNav toggleMusic={toggleMusic} playing={playing} />
+          <MobileNav toggleMusic={toggleMusic} playing={playing} loading={loading} />
 
           {/* Desktop Nav - Right */}
           <div className="ml-auto flex items-center gap-2 md:gap-3">
@@ -74,7 +75,11 @@ export function SiteHeader() {
               >
                 <FiMusic
                   className={`h-[18px] w-[18px] transition-colors ${
-                    playing ? "text-pink-500" : "text-muted-foreground"
+                    loading
+                      ? "text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.45)] motion-safe:animate-[music-loading-beep_1s_linear_infinite]"
+                      : playing
+                        ? "text-pink-500"
+                        : "text-muted-foreground"
                   }`}
                 />
               </Button>

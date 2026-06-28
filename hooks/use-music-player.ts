@@ -5,6 +5,7 @@ import * as React from "react";
 const YOUTUBE_PLAYLIST_ID = "PLbtikly6et8WoDb0PjDzg13LHCLuw7JdM";
 const FALLBACK_AUDIO_SRC = "/music/theme.mp3";
 const STORAGE_KEY = "portfolio-music:last-video-id";
+const FALLBACK_DELAY_MS = 8000;
 const DEBUG_MUSIC = process.env.NODE_ENV !== "production";
 
 type YouTubePlayerState = {
@@ -13,6 +14,12 @@ type YouTubePlayerState = {
   getPlayerState?: () => number;
   setLoop: (loop: boolean) => void;
   setShuffle: (shuffle: boolean) => void;
+  loadPlaylist: (options: {
+    listType?: "playlist" | "user_uploads";
+    list: string;
+    index?: number;
+    startSeconds?: number;
+  }) => void;
   playVideoAt: (index: number) => void;
   cuePlaylist: (options: {
     listType?: "playlist" | "user_uploads";
@@ -142,6 +149,7 @@ export function useMusicPlayer() {
   const hasStartedRef = React.useRef(false);
   const destroyedRef = React.useRef(false);
   const fallbackTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const preloadHandleRef = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
 
   const pauseFallback = React.useCallback(() => {
     const audio = fallbackAudioRef.current;
@@ -245,6 +253,7 @@ export function useMusicPlayer() {
             controls: 0,
             disablekb: 1,
             fs: 0,
+            enablejsapi: 1,
             iv_load_policy: 3,
             origin: typeof window !== "undefined" ? window.location.origin : undefined,
             list: YOUTUBE_PLAYLIST_ID,
@@ -265,7 +274,7 @@ export function useMusicPlayer() {
               try {
                 event.target.setLoop(true);
                 event.target.setShuffle(true);
-                event.target.cuePlaylist({
+                event.target.loadPlaylist({
                   listType: "playlist",
                   list: YOUTUBE_PLAYLIST_ID,
                   index: 0,
@@ -281,7 +290,7 @@ export function useMusicPlayer() {
               if (shouldPlayRef.current) {
                 pauseFallback();
                 logMusicStep("Autoplay requested, starting playlist");
-                startFromStoredTrack();
+                event.target.playVideo();
                 setPlaying(true);
               }
             },
@@ -328,12 +337,37 @@ export function useMusicPlayer() {
       }
     }
 
-    void initPlayer();
+    const schedulePreload = () => {
+      if (typeof window === "undefined") return;
+
+      if (typeof window.requestIdleCallback === "function") {
+        preloadHandleRef.current = window.requestIdleCallback(() => {
+          void initPlayer();
+        }, { timeout: 6000 });
+        return;
+      }
+
+      preloadHandleRef.current = window.setTimeout(() => {
+        void initPlayer();
+      }, 1800);
+    };
+
+    schedulePreload();
 
     return () => {
       cancelled = true;
       destroyedRef.current = true;
       clearFallbackTimer();
+
+      if (preloadHandleRef.current !== null) {
+        if (typeof window !== "undefined" && typeof window.cancelIdleCallback === "function") {
+          window.cancelIdleCallback(preloadHandleRef.current as number);
+        } else {
+          clearTimeout(preloadHandleRef.current);
+        }
+
+        preloadHandleRef.current = null;
+      }
 
       try {
         playerRef.current?.destroy();
@@ -389,7 +423,7 @@ export function useMusicPlayer() {
 
       logMusicStep("YouTube not ready in time; starting fallback");
       void playFallback();
-    }, 2500);
+    }, FALLBACK_DELAY_MS);
   }, [
     clearFallbackTimer,
     pauseFallback,

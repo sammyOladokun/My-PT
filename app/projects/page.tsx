@@ -28,9 +28,13 @@ const ProjectsPage = () => {
             style={
               {
                 '--card-accent': project.accent,
+                backgroundColor: 'transparent',
+                backgroundImage: 'none',
+                boxShadow: 'none',
+                backdropFilter: 'none',
               } as CSSProperties
             }
-            className="project-card relative w-full cursor-pointer isolate overflow-hidden border-border/10 bg-card/5 shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-300 backdrop-blur-3xl supports-[backdrop-filter]:bg-card/[0.04] md:border-transparent md:bg-card/10 md:shadow-[0_14px_38px_rgba(0,0,0,0.06)] md:backdrop-blur-[32px] md:hover:scale-[1.03]"
+            className="project-card relative w-full cursor-pointer isolate overflow-hidden border-transparent bg-transparent shadow-none backdrop-blur-0 transition-all duration-300 supports-[backdrop-filter]:bg-transparent md:hover:scale-[1.03]"
           >
             <div className="project-card__accent absolute left-6 top-0 h-1 w-16 rounded-b-full md:top-6 md:h-0.5 md:w-20" />
             <CardHeader className="md:pt-12">

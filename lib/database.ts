@@ -22,7 +22,7 @@ const connectToDatabase = async () => {
 
   try {
     await mongoose.connect(MONGODB_URI, {
-      dbName: "portfolio",
+      dbName: "portfolioData",
       bufferCommands: true,
     });
     console.log("Database connection established successfully.");

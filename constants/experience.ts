@@ -3,7 +3,7 @@ import { TimelineViewerData } from '@/types/TimelineViewer.types';
 export const experiences: TimelineViewerData[] = [
   {
     title: 'Frontend Developer · Veridian Arc',
-    date: '2023 – Present',
+    date: 'Aug 2025 – Nov 2025',
     description: `Developed responsive web interfaces using React.js, Next.js, and Tailwind CSS based on UI/UX designs. Collaborated with backend developers to integrate REST APIs and build dynamic, data-driven features. Improved code quality through reusable UI components, code reviews, bug fixing, testing, and Git/GitHub version control.`,
     latest: true,
   },

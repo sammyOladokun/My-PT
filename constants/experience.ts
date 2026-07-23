@@ -2,19 +2,19 @@ import { TimelineViewerData } from '@/types/TimelineViewer.types';
 
 export const experiences: TimelineViewerData[] = [
   {
-    title: 'Open Source Developer · Hacktoberfest',
-    date: 'Oct. 2025 - Present',
-    description: `Currently contributing as an Open Source Developer at Hacktoberfest, working on various web development projects and collaborating with the global developer community.`,
+    title: 'Frontend Developer · Veridian Arc',
+    date: '2023 – Present',
+    description: `Developed responsive web interfaces using React.js, Next.js, and Tailwind CSS based on UI/UX designs. Collaborated with backend developers to integrate REST APIs and build dynamic, data-driven features. Improved code quality through reusable UI components, code reviews, bug fixing, testing, and Git/GitHub version control.`,
     latest: true,
   },
   {
-    title: 'Trainee · Sheriyans Coding School',
-    date: 'May 2025 - Oct. 2025',
-    description: `Trainee at Sheriyans Coding School, learned full-stack technologies and DevOps practices. Participated in hackathons and collaborated on projects with the developer community.`,
+    title: 'Full Stack Developer · Freelance',
+    date: '2024 – Present',
+    description: `Built and maintained responsive web applications using Next.js, Node.js, Express.js, MongoDB, and PostgreSQL. Developed RESTful APIs, implemented authentication, database operations, and form validation, and delivered projects within agreed timelines.`,
   },
   {
-    title: 'Project Admin · GSSoC25 (GirlScript Summer of Code)',
-    date: 'Aug. 2025 - Sept. 2025',
-    description: `As a Project Admin, I reviewed code, merged pull requests, and communicated with developers, ensuring smooth project workflow and collaboration during GSSoC25.`,
+    title: 'Technical Skills & Tools',
+    date: 'Development and Workflow',
+    description: `Full-stack development with HTML5, CSS3, JavaScript, React.js, React Native, Node.js, Express, NestJS, Next.js, and Django. Tools and workflow experience include Tailwind CSS, GSAP, WordPress, Git, REST APIs, Webpack/Vite, and Figma UI/UX design.`,
   },
 ];

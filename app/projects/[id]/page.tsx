@@ -38,7 +38,10 @@ const TECH_ICONS: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 const getProject = async (slug: string) => {
-  return projects.find((project) => project.slug === slug);
+  return projects.find(
+    (project) =>
+      project.slug === slug || project.aliases?.includes(slug)
+  );
 };
 
 const ProjectDetails = async ({
